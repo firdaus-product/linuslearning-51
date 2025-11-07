@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ms-MY">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kemahiran Pemulihan: Menyusun Nombor (Pembelajaran)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { box-sizing: border-box; }
+    .activity-card { min-height: 400px; }
+    .number-card { transition: all .3s ease; cursor: pointer; }
+    .number-card:hover { transform: scale(1.05); }
+    .dragging { opacity: .5; transform: rotate(5deg); }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed #cbd5e1;
+      transition: all .3s ease;
+      min-width: 60px;
+      min-height: 60px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .drop-zone.drag-over { border-color: #3b82f6; background-color: #eff6ff; }
+
+    /* Salah */
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+    .shake { animation: shake 0.5s ease; }
+
+    /* Zon sudah diisi */
+    .drop-zone-filled {
+      border-style: solid;
+      border-color: #4ade80;
+      background-color: #f0fdf4;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-full">
+
+  <div class="bg-yellow-100 border-b-4 border-yellow-300 p-4 shadow-sm sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📚</span>
+        <span id="info-text" class="text-lg font-semibold text-gray-800">
+          Pilih aktiviti untuk mula belajar nombor!
+        </span>
+      </div>
+      <button id="speak-btn"
+              class="bg-yellow-300 hover:bg-yellow-400 text-yellow-800 font-bold py-2 px-4 rounded-full text-xl transition-colors duration-200"
+              onclick="speakInfo()">
+        🔊
+      </button>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto p-6">
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 activity-card flex items-center justify-center">
+      <div id="activity-content" class="text-center w-full">
+        <div class="py-16">
+          <div class="text-6xl mb-4">🔢</div>
+          <h2 class="text-3xl font-bold text-gray-800 mb-4">
+            Kemahiran Pemulihan: Menyusun Nombor
+          </h2>
+          <p class="text-xl text-gray-600 mb-8">
+            Pilih aktiviti di bawah untuk meneroka susunan nombor secara santai.
+          </p>
+          <div class="text-4xl">👇</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Pilih Aktiviti (Objektif 8-12)</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <button onclick="loadActivity(1)"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          1️⃣ Bilang 1-1
+        </button>
+        <button onclick="loadActivity(2)"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          2️⃣ Bilang 2-2
+        </button>
+        <button onclick="loadActivity(3)"
+                class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          5️⃣ Bilang 5-5
+        </button>
+        <button onclick="loadActivity(4)"
+                class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          🔟 Bilang 10-10
+        </button>
+        <button onclick="loadActivity(5)"
+                class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          💯 Bilang 100-100
+        </button>
+      </div>
+
+      <div class="flex justify-center gap-4">
+        <button onclick="clearActivity()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg text-lg transition-colors duration-200">
+          🧹 Bersih
+        </button>
+        <button onclick="nextActivity()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg text-lg transition-colors duration-200">
+          ➡️ Seterusnya
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentActivity = 0;
+    let ttsEnabled = false;
+    let currentInfo = "Pilih aktiviti untuk mula belajar nombor!";
+    let draggedElement = null;
+
+    // State utama untuk aktiviti susun
+    window.sortingGame = { sequence: [], nextCorrect: null };
+
+    /* ====== TTS ====== */
+    function speak(text) {
+      if (!ttsEnabled) return;
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      setTimeout(() => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ms-MY';
+        u.rate = 0.9; u.pitch = 1.05;
+        const voices = window.speechSynthesis.getVoices();
+        const ms = voices.find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms'));
+        if (ms) u.voice = ms;
+        window.speechSynthesis.speak(u);
+      }, 100);
+    }
+    function setInfo(text) { currentInfo = text; document.getElementById('info-text').textContent = text; }
+    function speakInfo() {
+      if (!ttsEnabled) {
+        ttsEnabled = true;
+        const btn = document.getElementById('speak-btn');
+        btn.classList.add('bg-green-300', 'hover:bg-green-400');
+        btn.classList.remove('bg-yellow-300', 'hover:bg-yellow-400');
+      }
+      speak(currentInfo);
+    }
+
+    /* ====== DnD helpers ====== */
+    function dragStart(e) { draggedElement = e.target; e.target.classList.add('dragging'); }
+    function dragEnd(e) { 
+      if(draggedElement) draggedElement.classList.remove('dragging');
+      draggedElement = null;
+      document.querySelectorAll('.drop-zone').forEach(z=>z.classList.remove('drag-over')); 
+    }
+    function allowDrop(e) { e.preventDefault(); if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.add('drag-over'); }
+    function dragLeave(e) { if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.remove('drag-over'); }
+
+    /* ====== Router Aktiviti ====== */
+    function loadActivity(n) {
+      currentActivity = n;
+      const content = document.getElementById('activity-content');
+      if (n === 1) return loadActivity_SatuSatu(content);
+      if (n === 2) return loadActivity_DuaDua(content);
+      if (n === 3) return loadActivity_LimaLima(content);
+      if (n === 4) return loadActivity_SepuluhSepuluh(content);
+      if (n === 5) return loadActivity_SeratusSeratus(content);
+    }
+    
+    /* ====== FUNGSI TERAS: Penjana Aktiviti Susun ====== */
+    
+    /**
+     * Fungsi utama untuk mencipta UI aktiviti susun.
+     * @param {HTMLElement} content - Elemen div 'activity-content'.
+     * @param {object} config - Konfigurasi untuk aktiviti.
+     * @param {string} config.title - Tajuk (cth: "1️⃣ Susun Nombor (Bilang 1-1)")
+     * @param {string} config.color - Warna Tailwind (cth: "blue", "green")
+     * @param {string} config.info - Arahan untuk 'info-bar'
+     * @param {number[]} config.sequence - Susunan nombor yang BETUL (cth: [101, 102, 103])
+     * @param {number[]} config.distractors - Nombor tambahan untuk mengeliru (cth: [100, 105])
+     */
+    function createSortingUI(content, config) {
+      const { title, color, info, sequence, distractors } = config;
+
+      // 1. Set state global
+      window.sortingGame = { 
+        sequence: [...sequence], 
+        nextCorrect: sequence[0] 
+      };
+      
+      // 2. Set info bar
+      setInfo(info);
+
+      // 3. Cipta kad pilihan (dicampurkan)
+      const allCards = [...sequence, ...distractors].sort(() => Math.random() - 0.5);
+      
+      const cardsHtml = allCards.map(num => `
+        <div class="number-card bg-${color}-100 border-2 border-${color}-300 rounded-lg p-4 text-2xl font-bold text-${color}-800 cursor-move"
+             draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-number="${num}">
+          ${num}
+        </div>
+      `).join('');
+
+      // 4. Cipta slot susunan (kosong)
+      // Kita guna 'min-w-20' untuk beri ruang, dan 'h-20' untuk saiz
+      const slotsHtml = sequence.map((num, index) => `
+        <div class="drop-zone rounded-lg p-5 text-2xl font-bold text-gray-400 h-20 min-w-20 flex items-center justify-center" 
+             ondrop="dropOnSlot(event)" 
+             ondragover="allowDrop(event)" 
+             ondragleave="dragLeave(event)"
+             data-index="${index}">
+          ...
+        </div>
+      `).join(`
+        <span class="text-2xl font-bold text-gray-300 mx-1">➡️</span>
+      `);
+
+      // 5. Render HTML
+      content.innerHTML = `
+        <h3 class="text-2xl font-bold text-${color}-600 mb-6">${title}</h3>
+        
+        <div class="mb-8">
+          <h4 class="text-lg font-semibold mb-3">Slot Susunan (Letak di sini):</h4>
+          <div id="sorting-line" class="flex flex-wrap items-center justify-center gap-2 p-4 bg-gray-50 rounded-lg">
+            ${slotsHtml}
+          </div>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-3">Kad Pilihan (Pilih dari sini):</h4>
+          <div id="card-pool" class="flex flex-wrap justify-center gap-4">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Logik apabila kad dilepaskan ke slot.
+     */
+    function dropOnSlot(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      if (!draggedElement) return;
+
+      const draggedNumber = parseInt(draggedElement.dataset.number);
+      const { sequence, nextCorrect } = window.sortingGame;
+
+      if (draggedNumber === nextCorrect) {
+        // BETUL
+        e.currentTarget.innerHTML = draggedNumber; // Masukkan nombor dalam slot
+        e.currentTarget.classList.add('drop-zone-filled', `bg-green-100`, `border-green-400`);
+        e.currentTarget.classList.remove('drop-zone', 'text-gray-400');
+        e.currentTarget.removeAttribute('ondrop'); // Slot ini selesai
+        
+        draggedElement.remove(); // Buang kad dari pilihan
+        draggedElement = null;
+
+        const currentIndex = sequence.indexOf(nextCorrect);
+        const nextIndex = currentIndex + 1;
+
+        if (nextIndex < sequence.length) {
+          // Masih ada nombor lagi
+          const newNext = sequence[nextIndex];
+          window.sortingGame.nextCorrect = newNext;
+          const msg = `Bagus! Sekarang cari nombor ${newNext}.`;
+          setInfo(msg); speak(msg);
+        } else {
+          // Selesai!
+          const msg = "Syabas! Anda berjaya menyusun semua nombor!";
+          setInfo(msg); speak(msg);
+          window.sortingGame.nextCorrect = null;
+        }
+        
+      } else {
+        // SALAH
+        const msg = `Oh! Itu bukan nombor yang betul. Cuba cari nombor ${nextCorrect}.`;
+        setInfo(msg); speak(msg);
+        draggedElement.classList.add('shake');
+        setTimeout(() => {
+          // Perlu semak jika draggedElement masih wujud sebelum buang kelas
+          if (document.contains(draggedElement)) {
+            draggedElement.classList.remove('shake');
+          }
+        }, 500);
+      }
+    }
+
+    /* ====== Definisi 5 Aktiviti Baru ====== */
+    
+    // Aktiviti 1: Bilang 1-1 (Objektif 8)
+    function loadActivity_SatuSatu(content) {
+      createSortingUI(content, {
+        title: "1️⃣ Susun Nombor (Bilang 1-1)",
+        color: "blue",
+        info: "Susun nombor satu-satu dalam tertib menaik. Mula dengan 101.",
+        sequence: [101, 102, 103, 104, 105],
+        distractors: [107, 100]
+      });
+    }
+
+    // Aktiviti 2: Bilang 2-2 (Objektif 9)
+    function loadActivity_DuaDua(content) {
+      createSortingUI(content, {
+        title: "2️⃣ Susun Nombor (Bilang 2-2)",
+        color: "green",
+        info: "Susun nombor dua-dua dalam tertib menaik. Mula dengan 101.",
+        sequence: [101, 103, 105, 107, 109],
+        distractors: [102, 110, 104]
+      });
+    }
+
+    // Aktiviti 3: Bilang 5-5 (Objektif 10)
+    function loadActivity_LimaLima(content) {
+      createSortingUI(content, {
+        title: "5️⃣ Susun Nombor (Bilang 5-5)",
+        color: "purple",
+        info: "Susun nombor lima-lima dalam tertib menaik. Mula dengan 120.",
+        sequence: [120, 125, 130, 135, 140],
+        distractors: [115, 145, 133]
+      });
+    }
+
+    // Aktiviti 4: Bilang 10-10 (Objektif 11)
+    function loadActivity_SepuluhSepuluh(content) {
+      createSortingUI(content, {
+        title: "🔟 Susun Nombor (Bilang 10-10)",
+        color: "orange",
+        info: "Susun nombor sepuluh-sepuluh dalam tertib menaik. Mula dengan 120.",
+        sequence: [120, 130, 140, 150, 160],
+        distractors: [110, 170, 125]
+      });
+    }
+    
+    // Aktiviti 5: Bilang 100-100 (Objektif 12)
+    function loadActivity_SeratusSeratus(content) {
+      createSortingUI(content, {
+        title: "💯 Susun Nombor (Bilang 100-100)",
+        color: "red",
+        info: "Susun nombor seratus-seratus dalam tertib menaik. Mula dengan 120.",
+        sequence: [120, 220, 320, 420, 520],
+        distractors: [20, 620, 310]
+      });
+    }
+
+
+    /* ====== Kawalan Umum (Kekal sama) ====== */
+    function clearActivity() {
+      currentActivity = 0;
+      document.getElementById('activity-content').innerHTML = `
+        <div class="text-center py-16">
+          <div class="text-6xl mb-4">🔢</div>
+          <h2 class="text-3xl font-bold text-gray-800 mb-4">Kemahiran Pemulihan: Menyusun Nombor</h2>
+          <p class="text-xl text-gray-600 mb-8">Pilih aktiviti di bawah untuk meneroka susunan nombor secara santai.</p>
+          <div class="text-4xl">👇</div>
+        </div>
+      `;
+      setInfo("Pilih aktiviti untuk mula belajar nombor!");
+    }
+    
+    function nextActivity() {
+      if (currentActivity === 0) return loadActivity(1);
+      if (currentActivity < 5) return loadActivity(currentActivity + 1);
+      return loadActivity(1);
+    }
+
+    // Kekalkan TTS resume pada sesetengah pelayar
+    if ('speechSynthesis' in window) {
+      setInterval(() => { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); }, 1000);
+    }
+  </script>
+</body>
+</html>
