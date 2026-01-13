@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="ms-MY">
+<html lang="ms-MY" class="overflow-hidden overscroll-none">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Matematik Ceria: Menyusun Nombor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
@@ -10,120 +11,186 @@
 
   <style>
     /* --- UI STYLE (TEMA HIJAU KONSISTEN) --- */
-    body { 
-        font-family: 'Fredoka', sans-serif; 
-        background-color: #f0fdf4; 
-        background-image: radial-gradient(#86efac 2px, transparent 2px); 
-        background-size: 30px 30px; 
+    body {
+      font-family: 'Fredoka', sans-serif;
+      background-color: #f0fdf4;
+      background-image: radial-gradient(#86efac 2px, transparent 2px);
+      background-size: 30px 30px;
     }
-    
+
     /* Card Container */
-    .game-card { 
-        background: white; 
-        border: 4px solid #475569; 
-        box-shadow: 8px 8px 0px #00000020; 
-        border-radius: 1.5rem; 
-        min-height: 550px; 
-        position: relative;
+    .game-card {
+      background: white;
+      border: 4px solid #475569;
+      box-shadow: 8px 8px 0px #00000020;
+      border-radius: 1.5rem;
+      /* min-height: 550px; REMOVED */
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
     }
-    
+
     /* Buttons 3D */
-    .btn-3d { 
-        transition: all 0.1s; 
-        border-bottom-width: 6px; 
-        border-color: rgba(0,0,0,0.2); 
-        transform: translateY(0); 
-        cursor: pointer; 
-        display: inline-block; 
+    .btn-3d {
+      transition: all 0.1s;
+      border-bottom-width: 6px;
+      border-color: rgba(0, 0, 0, 0.2);
+      transform: translateY(0);
+      cursor: pointer;
+      display: inline-block;
     }
-    .btn-3d:active:not(:disabled) { 
-        transform: translateY(4px); 
-        border-bottom-width: 2px; 
-        box-shadow: none; 
+
+    .btn-3d:active:not(:disabled) {
+      transform: translateY(4px);
+      border-bottom-width: 2px;
+      box-shadow: none;
     }
-    .btn-3d:disabled { opacity: 0.6; cursor: not-allowed; border-bottom-width: 6px; filter: grayscale(100%); }
+
+    .btn-3d:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      border-bottom-width: 6px;
+      filter: grayscale(100%);
+    }
 
     /* Animation */
-    .shake { animation: shake 0.4s ease-in-out; }
-    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-    
-    /* --- STYLES KHUSUS SUSUN NOMBOR --- */
-    
-    /* Drag Elements (Cards) */
-    .number-card { 
-        transition: all .2s; cursor: grab; 
-        box-shadow: 0 4px 0px rgba(0,0,0,0.1); 
-        border-width: 3px; border-radius: 1rem; 
-        display: flex; align-items: center; justify-content: center;
-        background: white; font-weight: bold;
-        user-select: none;
+    .shake {
+      animation: shake 0.4s ease-in-out;
     }
-    .number-card:active { cursor: grabbing; transform: scale(0.95); }
-    .number-card:hover { transform: translateY(-5px); z-index: 50; border-color: #4ade80; }
-    .dragging { opacity: 0.5; transform: scale(0.9); }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-8px);
+      }
+
+      75% {
+        transform: translateX(8px);
+      }
+    }
+
+    /* --- STYLES KHUSUS SUSUN NOMBOR --- */
+
+    /* Drag Elements (Cards) */
+    .number-card {
+      transition: all .2s;
+      cursor: grab;
+      box-shadow: 0 4px 0px rgba(0, 0, 0, 0.1);
+      border-width: 3px;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      font-weight: bold;
+      user-select: none;
+    }
+
+    .number-card:active {
+      cursor: grabbing;
+      transform: scale(0.95);
+    }
+
+    .number-card:hover {
+      transform: translateY(-5px);
+      z-index: 50;
+      border-color: #4ade80;
+    }
+
+    .dragging {
+      opacity: 0.5;
+      transform: scale(0.9);
+    }
 
     /* Drop Zones (Slots) */
-    .drop-zone { 
-        border: 4px dashed #94a3b8; background-color: #f1f5f9; 
-        transition: all .3s ease; border-radius: 1rem; 
-        min-width: 90px; height: 90px; 
-        display: flex; align-items: center; justify-content: center; 
-        font-size: 2rem; color: #cbd5e1;
-    }
-    .drop-zone.drag-over { border-color: #3b82f6; background-color: #dbeafe; transform: scale(1.05); }
-    
-    /* Zone Filled (Correct) */
-    .drop-zone-filled { 
-        border: 4px solid #22c55e !important; 
-        background-color: #dcfce7 !important; 
-        color: #15803d !important; 
-        transform: scale(1.05); 
-        box-shadow: 0 8px 0px rgba(0,0,0,0.1);
-        font-weight: bold;
+    .drop-zone {
+      border: 4px dashed #94a3b8;
+      background-color: #f1f5f9;
+      transition: all .3s ease;
+      border-radius: 1rem;
+      min-width: 90px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #cbd5e1;
     }
 
+    .drop-zone.drag-over {
+      border-color: #3b82f6;
+      background-color: #dbeafe;
+      transform: scale(1.05);
+    }
+
+    /* Zone Filled (Correct) */
+    .drop-zone-filled {
+      border: 4px solid #22c55e !important;
+      background-color: #dcfce7 !important;
+      color: #15803d !important;
+      transform: scale(1.05);
+      box-shadow: 0 8px 0px rgba(0, 0, 0, 0.1);
+      font-weight: bold;
+    }
   </style>
 </head>
-<body class="min-h-screen text-slate-800 pb-10">
 
-  <div class="fixed top-4 left-0 right-0 z-50 px-4 pointer-events-none">
-    <div class="max-w-4xl mx-auto bg-green-400 border-4 border-green-600 rounded-full px-6 py-3 shadow-xl flex items-center justify-between pointer-events-auto transform hover:scale-[1.01] transition-transform">
+<body class="h-screen w-screen overflow-hidden text-slate-800 flex flex-col overscroll-none">
+
+  <div class="flex-none p-4 z-50 pointer-events-none w-full">
+    <div
+      class="max-w-4xl mx-auto bg-green-400 border-4 border-green-600 rounded-full px-4 py-2 shadow-xl flex items-center justify-between pointer-events-auto transform hover:scale-[1.01] transition-transform">
       <div class="flex items-center gap-3">
-        <span class="text-3xl animate-bounce">📉</span>
-        <span id="info-text" class="text-xl font-bold text-green-900 leading-none mt-1">Jom Susun Nombor!</span>
+        <span class="text-2xl animate-bounce">📉</span>
+        <span id="info-text" class="text-lg font-bold text-green-900 leading-none mt-1">Jom Susun Nombor!</span>
       </div>
-      <button id="speak-btn" onclick="speakInfo()" class="bg-white hover:bg-green-50 text-green-600 border-2 border-green-200 rounded-full p-2 transition-colors shadow-sm">🔊</button>
+      <button id="speak-btn" onclick="speakInfo()"
+        class="bg-white hover:bg-green-50 text-green-600 border-2 border-green-200 rounded-full p-2 transition-colors shadow-sm">🔊</button>
     </div>
   </div>
-  <div class="h-24"></div>
+  <div class="h-4"></div>
 
-  <div class="max-w-6xl mx-auto p-4">
-    
-    <div class="game-card p-6 mb-8 flex items-center justify-center">
-        <div id="activity-content" class="w-full relative z-10">
-            <div class="py-10 text-center">
-                <div class="text-8xl mb-6 animate-pulse">📈</div>
-                <h2 class="text-5xl font-bold text-emerald-600 mb-4">Menyusun Nombor</h2>
-                <p class="text-2xl text-slate-500 mb-8 font-semibold">Pilih gandaan nombor di bawah untuk bermula!</p>
-                <div class="text-4xl animate-bounce">👇</div>
-            </div>
+  <div class="flex-1 w-full max-w-5xl mx-auto p-2 flex flex-col min-h-0">
+
+    <div class="game-card p-4 mb-2 flex-1 w-full">
+      <div id="activity-content" class="w-full h-full relative z-10 flex flex-col overflow-hidden">
+        <div class="py-10 text-center flex flex-col justify-center h-full">
+          <div class="text-6xl mb-4 animate-pulse">📈</div>
+          <h2 class="text-4xl font-bold text-emerald-600 mb-2">Menyusun Nombor</h2>
+          <p class="text-lg text-slate-500 mb-4 font-semibold">Pilih gandaan nombor di bawah untuk bermula!</p>
+          <div class="text-2xl animate-bounce">👇</div>
         </div>
+      </div>
     </div>
 
-    <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-6 border-2 border-white">
-      <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">🎮 Pilih Aktiviti</h3>
-      
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        <button onclick="loadActivity(1)" class="btn-3d bg-blue-500 text-white font-bold py-4 px-2 rounded-xl text-lg">1️⃣ Bilang 1-1</button>
-        <button onclick="loadActivity(2)" class="btn-3d bg-emerald-500 text-white font-bold py-4 px-2 rounded-xl text-lg">2️⃣ Bilang 2-2</button>
-        <button onclick="loadActivity(3)" class="btn-3d bg-violet-500 text-white font-bold py-4 px-2 rounded-xl text-lg">5️⃣ Bilang 5-5</button>
-        <button onclick="loadActivity(4)" class="btn-3d bg-orange-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🔟 Bilang 10</button>
-        <button onclick="loadActivity(5)" class="btn-3d bg-rose-500 text-white font-bold py-4 px-2 rounded-xl text-lg">💯 Bilang 100</button>
+    <div class="flex-none bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-2 border-2 border-white">
+      <h3 class="text-lg font-bold text-slate-700 mb-2 text-center">🎮 Pilih Aktiviti</h3>
+
+      <div class="grid grid-cols-5 gap-2 mb-2">
+        <button onclick="loadActivity(1)"
+          class="btn-3d bg-blue-500 text-white font-bold py-2 px-1 rounded-xl text-xs">1️⃣<br>1-1</button>
+        <button onclick="loadActivity(2)"
+          class="btn-3d bg-emerald-500 text-white font-bold py-2 px-1 rounded-xl text-xs">2️⃣<br>2-2</button>
+        <button onclick="loadActivity(3)"
+          class="btn-3d bg-violet-500 text-white font-bold py-2 px-1 rounded-xl text-xs">5️⃣<br>5-5</button>
+        <button onclick="loadActivity(4)"
+          class="btn-3d bg-orange-500 text-white font-bold py-2 px-1 rounded-xl text-xs">🔟<br>10-10</button>
+        <button onclick="loadActivity(5)"
+          class="btn-3d bg-rose-500 text-white font-bold py-2 px-1 rounded-xl text-xs">💯<br>100</button>
       </div>
 
-      <div class="flex justify-center gap-4 border-t-2 border-slate-100 pt-6">
-        <button onclick="clearActivity()" class="btn-3d bg-slate-400 text-white font-bold py-2 px-6 rounded-full text-lg">🏠 Menu</button>
-        <button onclick="nextActivity()" class="btn-3d bg-indigo-500 text-white font-bold py-2 px-8 rounded-full text-xl">Seterusnya ➡️</button>
+      <div class="flex justify-center gap-4 border-t-2 border-slate-100 pt-2">
+        <button onclick="clearActivity()"
+          class="btn-3d bg-slate-400 text-white font-bold py-1 px-4 rounded-full text-sm">🏠 Menu</button>
+        <button onclick="nextActivity()"
+          class="btn-3d bg-indigo-500 text-white font-bold py-1 px-6 rounded-full text-base">Seterusnya ➡️</button>
       </div>
     </div>
   </div>
@@ -134,52 +201,52 @@
     let ttsEnabled = false;
     let currentInfo = "Pilih aktiviti untuk mula.";
     let draggedElement = null;
-    
+
     // State global permainan
     window.sortingGame = { sequence: [], nextCorrect: null };
 
     function triggerWin() { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); }
-    
-    function speak(text) { 
-        if (!ttsEnabled || !('speechSynthesis' in window)) return; 
-        window.speechSynthesis.cancel(); 
-        const u = new SpeechSynthesisUtterance(text); 
-        u.lang = 'ms-MY'; u.rate = 0.9; u.pitch = 1.1; 
-        const voices = window.speechSynthesis.getVoices(); 
-        const ms = voices.find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms')); 
-        if (ms) u.voice = ms; 
-        window.speechSynthesis.speak(u); 
+
+    function speak(text) {
+      if (!ttsEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ms-MY'; u.rate = 0.9; u.pitch = 1.1;
+      const voices = window.speechSynthesis.getVoices();
+      const ms = voices.find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms'));
+      if (ms) u.voice = ms;
+      window.speechSynthesis.speak(u);
     }
-    
-    function setInfo(text) { 
-        currentInfo = text; 
-        const infoEl = document.getElementById('info-text'); 
-        infoEl.style.opacity = 0; 
-        setTimeout(() => { infoEl.textContent = text; infoEl.style.opacity = 1; }, 200); 
+
+    function setInfo(text) {
+      currentInfo = text;
+      const infoEl = document.getElementById('info-text');
+      infoEl.style.opacity = 0;
+      setTimeout(() => { infoEl.textContent = text; infoEl.style.opacity = 1; }, 200);
     }
-    
-    function speakInfo() { 
-        if (!ttsEnabled) { 
-            ttsEnabled = true; 
-            document.getElementById('speak-btn').classList.add('bg-green-100', 'text-green-600'); 
-        } 
-        speak(currentInfo); 
+
+    function speakInfo() {
+      if (!ttsEnabled) {
+        ttsEnabled = true;
+        document.getElementById('speak-btn').classList.add('bg-green-100', 'text-green-600');
+      }
+      speak(currentInfo);
     }
 
     /* --- DRAG AND DROP HELPERS --- */
-    window.dragStart = function(e) { draggedElement = e.target; e.target.classList.add('dragging'); }
-    window.dragEnd = function(e) { 
-        if(draggedElement) draggedElement.classList.remove('dragging'); 
-        draggedElement = null; 
-        document.querySelectorAll('.drop-zone').forEach(z=>z.classList.remove('drag-over')); 
+    window.dragStart = function (e) { draggedElement = e.target; e.target.classList.add('dragging'); }
+    window.dragEnd = function (e) {
+      if (draggedElement) draggedElement.classList.remove('dragging');
+      draggedElement = null;
+      document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
     }
-    window.allowDrop = function(e) { 
-        e.preventDefault(); 
-        if (e.currentTarget.classList.contains('drop-zone') && !e.currentTarget.classList.contains('drop-zone-filled')) {
-            e.currentTarget.classList.add('drag-over'); 
-        }
+    window.allowDrop = function (e) {
+      e.preventDefault();
+      if (e.currentTarget.classList.contains('drop-zone') && !e.currentTarget.classList.contains('drop-zone-filled')) {
+        e.currentTarget.classList.add('drag-over');
+      }
     }
-    window.dragLeave = function(e) { if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.remove('drag-over'); }
+    window.dragLeave = function (e) { if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.remove('drag-over'); }
 
     /* --- ROUTER --- */
     function loadActivity(n) {
@@ -187,26 +254,26 @@
       const content = document.getElementById('activity-content');
       content.style.opacity = 0;
       setTimeout(() => {
-          if (n === 1) loadActivity_SatuSatu(content);
-          if (n === 2) loadActivity_DuaDua(content);
-          if (n === 3) loadActivity_LimaLima(content);
-          if (n === 4) loadActivity_SepuluhSepuluh(content);
-          if (n === 5) loadActivity_SeratusSeratus(content);
-          content.style.opacity = 1;
+        if (n === 1) loadActivity_SatuSatu(content);
+        if (n === 2) loadActivity_DuaDua(content);
+        if (n === 3) loadActivity_LimaLima(content);
+        if (n === 4) loadActivity_SepuluhSepuluh(content);
+        if (n === 5) loadActivity_SeratusSeratus(content);
+        content.style.opacity = 1;
       }, 200);
     }
 
     function clearActivity() {
-        currentActivity = 0;
-        document.getElementById('activity-content').innerHTML = `<div class="py-10 text-center"><div class="text-8xl mb-6 animate-bounce">📈</div><h2 class="text-5xl font-bold text-emerald-600 mb-4">Menyusun Nombor</h2><p class="text-2xl text-slate-500 mb-8 font-semibold">Pilih butang di bawah.</p></div>`;
-        setInfo("Pilih aktiviti untuk mula.");
+      currentActivity = 0;
+      document.getElementById('activity-content').innerHTML = `<div class="py-10 text-center flex flex-col justify-center h-full"><div class="text-6xl mb-4 animate-bounce">📈</div><h2 class="text-4xl font-bold text-emerald-600 mb-2">Menyusun Nombor</h2><p class="text-lg text-slate-500 mb-4 font-semibold">Pilih butang di bawah.</p></div>`;
+      setInfo("Pilih aktiviti untuk mula.");
     }
     function nextActivity() { let next = currentActivity + 1; if (next > 5) next = 1; loadActivity(next); }
 
     /* =========================================
        LOGIK GAME SORTING
        ========================================= */
-    
+
     function createSortingUI(content, config) {
       const { title, color, info, sequence, distractors } = config;
 
@@ -216,48 +283,52 @@
 
       // 2. Cipta kad (shuffle)
       const allCards = [...sequence, ...distractors].sort(() => Math.random() - 0.5);
-      
+
       const cardsHtml = allCards.map(num => `
-        <div class="number-card border-${color}-400 text-${color}-700 p-4 text-3xl md:text-4xl"
-             draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-number="${num}" style="width:100px; height:100px;">
+        <div class="number-card border-${color}-400 text-${color}-700 p-2 text-xl md:text-2xl flex-none"
+             draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-number="${num}" style="width:60px; height:60px;">
           ${num}
         </div>
       `).join('');
 
       // 3. Cipta slot
       const slotsHtml = sequence.map((num, index) => `
-        <div class="drop-zone" 
+        <div class="drop-zone flex-none" 
              ondrop="dropOnSlot(event)" 
              ondragover="allowDrop(event)" 
              ondragleave="dragLeave(event)"
-             data-index="${index}" style="width:100px; height:100px;">
+             data-index="${index}" style="width:60px; height:60px;">
           ?
         </div>
       `).join(`
-        <span class="text-4xl font-bold text-slate-300 mx-2">➜</span>
+        <span class="text-2xl font-bold text-slate-300 mx-1">➜</span>
       `);
 
       // 4. Render
       content.innerHTML = `
-        <h3 class="text-4xl font-bold text-${color}-500 mb-6 text-center">${title}</h3>
-        
-        <div class="bg-slate-50 rounded-3xl p-8 border-4 border-slate-200 mb-8 overflow-x-auto">
-          <h4 class="text-sm font-bold text-slate-400 uppercase mb-4 text-center tracking-widest">LENGKAPKAN URUTAN</h4>
-          <div id="sorting-line" class="flex flex-wrap items-center justify-center gap-2 min-w-max mx-auto">
-            ${slotsHtml}
-          </div>
-        </div>
-        
-        <div>
-          <h4 class="text-sm font-bold text-slate-400 uppercase mb-4 text-center tracking-widest">PILIHAN NOMBOR</h4>
-          <div id="card-pool" class="flex flex-wrap justify-center gap-4 bg-${color}-50 p-6 rounded-2xl border-2 border-${color}-100">
-            ${cardsHtml}
-          </div>
+        <div class="w-full h-full flex flex-col overflow-hidden">
+            <h3 class="text-xl font-bold text-${color}-500 mb-2 text-center flex-none">${title}</h3>
+            
+            <div class="flex-1 w-full flex flex-col min-h-0 overflow-y-auto">
+                <div class="bg-slate-50 rounded-2xl p-2 border-4 border-slate-200 mb-2 flex-none overflow-x-auto w-full">
+                  <h4 class="text-xs font-bold text-slate-400 uppercase mb-2 text-center tracking-widest">LENGKAPKAN URUTAN</h4>
+                  <div id="sorting-line" class="flex flex-nowrap items-center justify-start md:justify-center gap-2 px-2 min-w-min">
+                    ${slotsHtml}
+                  </div>
+                </div>
+                
+                <div class="flex-1 min-h-0 overflow-y-auto">
+                  <h4 class="text-xs font-bold text-slate-400 uppercase mb-2 text-center tracking-widest">PILIHAN NOMBOR</h4>
+                  <div id="card-pool" class="flex flex-wrap justify-center gap-2 bg-${color}-50 p-2 rounded-2xl border-2 border-${color}-100">
+                    ${cardsHtml}
+                  </div>
+                </div>
+            </div>
         </div>
       `;
     }
 
-    window.dropOnSlot = function(e) {
+    window.dropOnSlot = function (e) {
       e.preventDefault();
       e.currentTarget.classList.remove('drag-over');
       if (!draggedElement) return;
@@ -270,8 +341,8 @@
         e.currentTarget.innerHTML = draggedNumber;
         e.currentTarget.classList.remove('drop-zone');
         e.currentTarget.classList.add('drop-zone-filled');
-        e.currentTarget.removeAttribute('ondrop'); 
-        
+        e.currentTarget.removeAttribute('ondrop');
+
         // Hilangkan kad asal
         draggedElement.style.transform = "scale(0)";
         setTimeout(() => draggedElement.remove(), 200);
@@ -292,7 +363,7 @@
           triggerWin();
           window.sortingGame.nextCorrect = null;
         }
-        
+
       } else {
         // SALAH
         const msg = `Salah. Cari nombor ${nextCorrect}.`;
@@ -345,7 +416,7 @@
         distractors: [110, 170, 125]
       });
     }
-    
+
     function loadActivity_SeratusSeratus(content) {
       createSortingUI(content, {
         title: "💯 Bilang 100-100",
@@ -361,4 +432,5 @@
 
   </script>
 </body>
+
 </html>
